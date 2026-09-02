@@ -17,16 +17,6 @@ on:
 # https://github.com/petrochenkov-ak-lab/.github/settings/secrets/actions
 # IP_185_221_213_245_SSH_KEY ~/.ssh/keys/185.221.213.245/user2845bb32d13551897dd1f814
 jobs:
-  validate-secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check server secrets
-        env:
-          KEY: ${{ secrets.IP_185_221_213_245_SSH_KEY }}
-        run: |
-          [ -n "$KEY" ] || { echo "ERROR: Secret IP_185_221_213_245_SSH_KEY is empty or not found!"; exit 1; }
-          echo "SUCCESS: All secrets for 185.221.213.245 are valid."
-
   run-deploy:
     uses: ./.github/workflows/docker-compose-prod.yml
     with:
