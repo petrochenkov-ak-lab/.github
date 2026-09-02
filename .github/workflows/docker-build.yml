@@ -12,19 +12,20 @@ on:
         type: string
         default: 'latest'
         description: 'Build tag'
-      dockerfile_path:
+      dockerfile:
         required: false
         type: string
         default: './Dockerfile'
         description: 'Path to Dockerfile'
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ inputs.dockerfile_path }}
+          file: ${{ inputs.dockerfile }}
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
           cache-from: type=gha
