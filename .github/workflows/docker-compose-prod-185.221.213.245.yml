@@ -1,0 +1,24 @@
+name: docker-compose-prod-185.221.213.245
+on: workflow_dispatch
+
+jobs:
+  validate-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check server secrets
+        env:
+          KEY: ${{ secrets.IP_185_221_213_245_SSH_KEY }}
+          USER: ${{ secrets.IP_185_221_213_245_SSH_USER }}
+          HOST: ${{ secrets.IP_185_221_213_245_SSH_HOST }}
+        run: |
+          [ -n "$KEY" ]  || { echo "ERROR: Secret IP_185_221_213_245_SSH_KEY is empty or not found!"; exit 1; }
+          [ -n "$USER" ] || { echo "ERROR: Secret IP_185_221_213_245_SSH_USER is empty or not found!"; exit 1; }
+          [ -n "$HOST" ] || { echo "ERROR: Secret IP_185_221_213_245_SSH_HOST is empty or not found!"; exit 1; }
+          echo "SUCCESS: All secrets for 185.221.213.245 are valid."
+
+  run-deploy:
+    uses: ./.github/workflows/docker-compose-prod.yml
+    secrets:
+      SSH_KEY: ${{ secrets.IP_185_221_213_245_SSH_KEY }}
+      SSH_USER: ${{ secrets.IP_185_221_213_245_SSH_USER }}
+      SSH_HOST: ${{ secrets.IP_185_221_213_245_SSH_HOST }}
