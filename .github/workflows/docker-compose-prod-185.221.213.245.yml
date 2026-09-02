@@ -29,5 +29,8 @@ jobs:
     with:
       SSH_HOST: '185.221.213.245'
       SSH_USER: user2845bb32d13551897dd1f814
+      image_name: ${{ inputs.image_name }}
+      image_tag: ${{ inputs.image_tag }}
+      dockerfile: ${{ inputs.dockerfile }}
     secrets:
       SSH_KEY: ${{ secrets.IP_185_221_213_245_SSH_KEY }}
