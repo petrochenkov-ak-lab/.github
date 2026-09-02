@@ -3,6 +3,16 @@ name: Manual Deploy to PROD
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
     secrets:
       SSH_KEY:
         required: true
@@ -25,9 +35,14 @@ jobs:
         run: |
           grep -v -e '^#' -e '^$' .env.prod >> $GITHUB_ENV
 
+      - name: Set Image Meta to Env
+        run: |
+          echo "IMAGE_NAME=${{ inputs.image_name }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
       - name: Validate Environment Variables
         env:
-          SSH_KEY: ${{ secrets.SSH_KEY }} # ~/.ssh/keys/{ip}/{user}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
         run: |
           [ -n "$SSH_KEY" ] || { echo "ERROR: secret.SSH_KEY is empty"; exit 1; }
           [ -n "$SSH_HOST" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
