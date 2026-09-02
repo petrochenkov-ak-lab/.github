@@ -6,10 +6,13 @@ on:
     inputs:
       image_name:
         type: string
+        required: true
       image_tag:
         type: string
+        required: true
       dockerfile:
         type: string
+        required: true
 
 # https://github.com/petrochenkov-ak-lab/.github/settings/secrets/actions
 # IP_185_221_213_245_SSH_KEY ~/.ssh/keys/185.221.213.245/user2845bb32d13551897dd1f814
@@ -27,10 +30,10 @@ jobs:
   run-deploy:
     uses: ./.github/workflows/docker-compose-prod.yml
     with:
-      SSH_HOST: '185.221.213.245'
-      SSH_USER: user2845bb32d13551897dd1f814
       image_name: ${{ inputs.image_name }}
       image_tag: ${{ inputs.image_tag }}
       dockerfile: ${{ inputs.dockerfile }}
     secrets:
       SSH_KEY: ${{ secrets.IP_185_221_213_245_SSH_KEY }}
+      SSH_HOST: '185.221.213.245'
+      SSH_USER: 'user2845bb32d13551897dd1f814'
