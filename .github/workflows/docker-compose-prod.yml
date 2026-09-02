@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Load .env.prod file
-        working-directory: deploy/prod
+        working-directory: docker/compose/prod
         run: |
           grep -v -e '^#' -e '^$' .env.prod >> $GITHUB_ENV
 
@@ -73,7 +73,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy via Docker Compose
-        working-directory: deploy/prod
+        working-directory: docker/compose/prod
         run: |
-          docker compose -f docker/compose/prod/docker-compose.yaml --env-file .env.prod pull
-          docker compose -f docker/compose/prod/docker-compose.yaml --env-file .env.prod up -d --remove-orphans
+          docker compose -f docker-compose.yaml --env-file .env.prod pull
+          docker compose -f docker-compose.yaml --env-file .env.prod up -d --remove-orphans
