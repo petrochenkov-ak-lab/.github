@@ -30,31 +30,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Load .env.prod file
+      - name: Create runtime .env file
         working-directory: docker/compose/prod
         run: |
-          grep -v -e '^#' -e '^$' .env.prod >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ inputs.image_name }}" >> .env
+          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
+          echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
 
-      - name: Set Image Meta to Env
-        run: |
-          echo "IMAGE_NAME=${{ inputs.image_name }}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+          # Если у вас есть другие переменные для приложения,
+          # передайте их сюда из GitHub Secrets:
+          # echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
-      - name: Validate Environment Variables
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
+      - name: Validate Configuration
         run: |
-          [ -n "$SSH_KEY" ] || { echo "ERROR: secret.SSH_KEY is empty"; exit 1; }
-          [ -n "$SSH_HOST" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
-          [ -n "$SSH_USER" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
-          [ -n "$COMPOSE_PROJECT_NAME" ] || { echo "ERROR: COMPOSE_PROJECT_NAME is empty in .env.prod"; exit 1; }
+          [ -n "${{ secrets.SSH_KEY }}" ] || { echo "ERROR: secret.SSH_KEY is empty"; exit 1; }
+          [ -n "${{ secrets.SSH_HOST }}" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
+          [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
+          [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH Key and Agent
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
@@ -62,7 +61,7 @@ jobs:
 
       - name: Create Docker Context
         run: |
-          docker context create remote-server --docker "host=ssh://$SSH_USER@$SSH_HOST"
+          docker context create remote-server --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
           docker context use remote-server
 
       - name: Log in to GitHub Container Registry (GHCR)
@@ -75,5 +74,5 @@ jobs:
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
         run: |
-          docker compose -f docker-compose.yaml --env-file .env.prod pull
-          docker compose -f docker-compose.yaml --env-file .env.prod up -d --remove-orphans
+          docker compose -f docker-compose.yaml pull
+          docker compose -f docker-compose.yaml up -d --remove-orphans
