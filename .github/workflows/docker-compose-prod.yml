@@ -27,7 +27,7 @@ jobs:
     environment: prod
     permissions:
       contents: read
-      packages: read # Разрешает временному GITHUB_TOKEN скачивать образы из GHCR
+      packages: read
 
     steps:
       - name: Checkout repository
@@ -56,6 +56,11 @@ jobs:
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
 
+      - name: Create Docker Context
+        run: |
+          docker context create remote-server --docker host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          docker context use remote-server
+
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
@@ -66,7 +71,7 @@ jobs:
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
         env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          DOCKER_CONTEXT: remote-server
         run: |
           docker compose -f docker-compose.yaml pull
           docker compose -f docker-compose.yaml up -d --remove-orphans
