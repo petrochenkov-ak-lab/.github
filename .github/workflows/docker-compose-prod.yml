@@ -30,15 +30,20 @@ jobs:
           [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
           [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
 
-      - name: Deploy via SSH directly on server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Set up SSH agent and keys
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          envs: GITHUB_ACTOR,GITHUB_TOKEN
-          script: |
-            mkdir -p /etc/${{ vars.COMPOSE_PROJECT_NAME }}
-            cd /etc/${{ vars.COMPOSE_PROJECT_NAME }}
-            docker compose pull
-            docker compose up -d --remove-orphans
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Add remote server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via DOCKER_HOST
+        env:
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          COMPOSE_PROJECT_NAME: ${{ vars.COMPOSE_PROJECT_NAME }}
+        run: |
+          docker compose -f docker-compose-prod.yml pull
+          docker compose -f docker-compose-prod.yml up -d --remove-orphans
