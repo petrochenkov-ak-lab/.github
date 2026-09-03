@@ -49,11 +49,14 @@ jobs:
 
       - name: Configure SSH Key
         run: |
-          sudo mkdir -p /root/.ssh
-          echo "${{ secrets.SSH_KEY }}" | sudo tee /root/.ssh/id_rsa > /dev/null
-          sudo chmod 600 /root/.ssh/id_rsa
-          sudo ssh-keyscan -H "${{ secrets.SSH_HOST }}" | sudo tee -a /root/.ssh/known_hosts > /dev/null
-          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" | sudo tee /root/.ssh/config > /dev/null
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          # Отключаем строгую проверку ключей для текущего пользователя runner
+          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
