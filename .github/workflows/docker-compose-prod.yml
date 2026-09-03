@@ -56,11 +56,6 @@ jobs:
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
 
-      - name: Create Docker Context
-        run: |
-          docker context create remote-server --docker host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
-          docker context use remote-server
-
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
@@ -71,7 +66,7 @@ jobs:
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
         env:
-          DOCKER_CONTEXT: remote-server
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
         run: |
-          sudo docker compose -f docker-compose.yaml pull
-          sudo docker compose -f docker-compose.yaml up -d --remove-orphans
+          sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
+          sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
