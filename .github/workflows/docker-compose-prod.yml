@@ -45,21 +45,12 @@ jobs:
           echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
           echo "DJANGO_PORT=8000" >> .env
 
-      - name: Set up SSH Key and Agent
+      - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_rsa
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
-
-      - name: Create Docker Context
-        run: |
-          docker context create remote-server --docker host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
-          docker context use remote-server
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
@@ -70,8 +61,6 @@ jobs:
 
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
-        env:
-          DOCKER_HOST: ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
         run: |
-          docker compose -f docker-compose.yaml pull
-          docker compose -f docker-compose.yaml up -d --remove-orphans
+          docker --host "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" compose pull
+          docker --host "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" compose up -d --remove-orphans
