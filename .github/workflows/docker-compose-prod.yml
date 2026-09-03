@@ -30,23 +30,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create runtime .env file
-        working-directory: docker/compose/prod
-        run: |
-          echo "IMAGE_NAME=${{ inputs.image_name }}" >> .env
-          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
-          echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
-
-          # Если у вас есть другие переменные для приложения,
-          # передайте их сюда из GitHub Secrets:
-          # echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-
       - name: Validate Configuration
         run: |
           [ -n "${{ secrets.SSH_KEY }}" ] || { echo "ERROR: secret.SSH_KEY is empty"; exit 1; }
           [ -n "${{ secrets.SSH_HOST }}" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
           [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
           [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
+
+      - name: Create runtime .env file
+        working-directory: docker/compose/prod
+        run: |
+          echo "IMAGE_NAME=${{ inputs.image_name }}" >> .env
+          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
+          echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
+          echo "DJANGO_PORT=8000" >> .env
 
       - name: Set up SSH Key and Agent
         run: |
@@ -61,7 +58,7 @@ jobs:
 
       - name: Create Docker Context
         run: |
-          docker context create remote-server --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          docker context create remote-server --docker host="ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
           docker context use remote-server
 
       - name: Log in to GitHub Container Registry (GHCR)
@@ -73,6 +70,8 @@ jobs:
 
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
+        env:
+          DOCKER_CONTEXT: remote-server
         run: |
           docker compose -f docker-compose.yaml pull
           docker compose -f docker-compose.yaml up -d --remove-orphans
