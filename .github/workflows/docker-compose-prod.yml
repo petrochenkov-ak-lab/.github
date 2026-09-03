@@ -64,6 +64,8 @@ jobs:
 
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
+        env:
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
         run: |
-          sudo DOCKER_HOST="ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
-          sudo DOCKER_HOST="ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
+          docker compose pull
+          docker compose up -d --remove-orphans
