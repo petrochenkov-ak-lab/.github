@@ -30,28 +30,15 @@ jobs:
           [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
           [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
 
-      - name: Configure SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
-
-          # Отключаем строгую проверку ключей для текущего пользователя runner
-          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-      - name: Log in to GitHub Container Registry (GHCR)
-        uses: docker/login-action@v3
+      - name: Deploy via SSH directly on server
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy via Docker Compose
-        working-directory: docker/compose/prod
-        env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-        run: |
-          docker compose pull
-          docker compose up -d --remove-orphans
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          envs: GITHUB_ACTOR,GITHUB_TOKEN
+          script: |
+            mkdir -p /etc/${{ vars.COMPOSE_PROJECT_NAME }}
+            cd /etc/${{ vars.COMPOSE_PROJECT_NAME }}
+            docker compose pull
+            docker compose up -d --remove-orphans
