@@ -3,16 +3,6 @@ name: docker-compose-prod.yml
 on:
   workflow_dispatch:
   workflow_call:
-    inputs:
-      image_name:
-        required: true
-        type: string
-      image_tag:
-        required: true
-        type: string
-      dockerfile:
-        required: true
-        type: string
     secrets:
       SSH_KEY:
         required: true
@@ -39,13 +29,6 @@ jobs:
           [ -n "${{ secrets.SSH_HOST }}" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
           [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
           [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
-
-      - name: Create runtime .env file
-        working-directory: docker/compose/prod
-        run: |
-          echo "IMAGE_NAME=${{ inputs.image_name }}" >> .env
-          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
-          echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
 
       - name: Configure SSH Key
         run: |
