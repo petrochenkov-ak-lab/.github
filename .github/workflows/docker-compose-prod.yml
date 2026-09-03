@@ -45,5 +45,5 @@ jobs:
           DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
           COMPOSE_PROJECT_NAME: ${{ vars.COMPOSE_PROJECT_NAME }}
         run: |
-          docker compose -f docker/compose/prod/docker-compose.yml pull
-          docker compose -f docker/compose/prod/docker-compose.yml up -d --remove-orphans
+          docker compose -f docker/compose/docker-compose.prod.yaml pull
+          docker compose -f docker/compose/docker-compose.prod.yaml up -d --remove-orphans
