@@ -1,4 +1,4 @@
-name: Shared Docker Build
+name: docker-build.yml
 
 on:
   workflow_call:

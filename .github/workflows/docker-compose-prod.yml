@@ -1,4 +1,4 @@
-name: Manual Deploy to PROD
+name: docker-compose-prod.yml
 
 on:
   workflow_dispatch:
