@@ -27,7 +27,7 @@ jobs:
     environment: prod
     permissions:
       contents: read
-      packages: read
+      packages: read # Разрешает временному GITHUB_TOKEN скачивать образы из GHCR
 
     steps:
       - name: Checkout repository
@@ -48,15 +48,13 @@ jobs:
           echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
           echo "DJANGO_PORT=8000" >> .env
 
-      - name: Copy files to Remote Server via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "docker/compose/prod/docker-compose.yaml,docker/compose/prod/.env"
-          target: "~/app-deploy"
-          strip_components: 3
+      - name: Configure SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
@@ -65,14 +63,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Executing remote ssh commands to deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd ~/app-deploy
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            sudo docker compose pull
-            sudo docker compose up -d --remove-orphans
+      - name: Deploy via Docker Compose
+        working-directory: docker/compose/prod
+        env:
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+        run: |
+          docker compose -f docker-compose.yaml pull
+          docker compose -f docker-compose.yaml up -d --remove-orphans
