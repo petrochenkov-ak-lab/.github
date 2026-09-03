@@ -50,10 +50,11 @@ jobs:
 
       - name: Configure SSH Key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          sudo mkdir -p /root/.ssh
+          echo "${{ secrets.SSH_KEY }}" | sudo tee /root/.ssh/id_rsa > /dev/null
+          sudo chmod 600 /root/.ssh/id_rsa
+          sudo ssh-keyscan -H "${{ secrets.SSH_HOST }}" | sudo tee -a /root/.ssh/known_hosts > /dev/null
+          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" | sudo tee /root/.ssh/config > /dev/null
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
@@ -65,7 +66,7 @@ jobs:
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
         env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}?ssh-flags=-o%20StrictHostKeyChecking=no%20-o%20UserKnownHostsFile=/dev/null"
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
         run: |
           sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
           sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
