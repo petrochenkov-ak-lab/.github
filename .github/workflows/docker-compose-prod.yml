@@ -54,7 +54,6 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
-          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
@@ -66,7 +65,7 @@ jobs:
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
         env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}?ssh-flags=-o%20StrictHostKeyChecking=no%20-o%20UserKnownHostsFile=/dev/null"
         run: |
           sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
           sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
