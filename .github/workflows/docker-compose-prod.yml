@@ -52,7 +52,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
-          # Отключаем строгую проверку хоста для docker-контекстов через SSH
           echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
 
       - name: Log in to GitHub Container Registry (GHCR)
@@ -67,5 +66,6 @@ jobs:
         env:
           DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
         run: |
-          docker compose -f docker-compose.yaml pull
-          docker compose -f docker-compose.yaml up -d --remove-orphans
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          sudo docker compose -f docker-compose.yaml pull
+          sudo docker compose -f docker-compose.yaml up -d --remove-orphans
