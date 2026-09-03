@@ -73,5 +73,5 @@ jobs:
         env:
           DOCKER_CONTEXT: remote-server
         run: |
-          docker compose -f docker-compose.yaml pull
-          docker compose -f docker-compose.yaml up -d --remove-orphans
+          sudo docker compose -f docker-compose.yaml pull
+          sudo docker compose -f docker-compose.yaml up -d --remove-orphans
