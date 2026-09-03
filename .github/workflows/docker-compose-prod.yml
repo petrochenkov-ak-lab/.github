@@ -46,7 +46,6 @@ jobs:
           echo "IMAGE_NAME=${{ inputs.image_name }}" >> .env
           echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
           echo "COMPOSE_PROJECT_NAME=${{ vars.COMPOSE_PROJECT_NAME }}" >> .env
-          echo "DJANGO_PORT=8000" >> .env
 
       - name: Configure SSH Key
         run: |
@@ -65,8 +64,6 @@ jobs:
 
       - name: Deploy via Docker Compose
         working-directory: docker/compose/prod
-        env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
         run: |
-          sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
-          sudo -E DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
+          sudo DOCKER_HOST="ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml pull
+          sudo DOCKER_HOST="ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DOCKER_CONFIG=$HOME/.docker docker compose -f docker-compose.yaml up -d --remove-orphans
