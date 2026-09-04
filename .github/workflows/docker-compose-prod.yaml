@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      SSH_KEY:
+      SECRET_SSH_KEY:
         required: true
-      SSH_HOST:
+      SECRET_SSH_HOST:
         required: true
-      SSH_USER:
+      SECRET_SSH_USER:
         required: true
 
 jobs:
@@ -25,24 +25,24 @@ jobs:
 
       - name: Validate Configuration
         run: |
-          [ -n "${{ secrets.SSH_KEY }}" ] || { echo "ERROR: secret.SSH_KEY is empty"; exit 1; }
-          [ -n "${{ secrets.SSH_HOST }}" ] || { echo "ERROR: secret.SSH_HOST is empty"; exit 1; }
-          [ -n "${{ secrets.SSH_USER }}" ] || { echo "ERROR: secret.SSH_USER is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secret.SECRET_SSH_KEY is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secret.SECRET_SSH_HOST is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secret.SECRET_SSH_USER is empty"; exit 1; }
           [ -n "${{ vars.COMPOSE_PROJECT_NAME }}" ] || { echo "ERROR: vars.COMPOSE_PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH agent and keys
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+          ssh-private-key: ${{ secrets.SECRET_SSH_KEY }}
 
       - name: Add remote server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SECRET_SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via DOCKER_HOST
         env:
-          DOCKER_HOST: "ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          DOCKER_HOST: "ssh://${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
           COMPOSE_PROJECT_NAME: ${{ vars.COMPOSE_PROJECT_NAME }}
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
