@@ -1,5 +1,3 @@
-name: docker-compose-prod.yml
-
 on:
   workflow_dispatch:
   workflow_call:
