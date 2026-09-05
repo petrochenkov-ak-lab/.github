@@ -51,7 +51,7 @@ jobs:
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
             cd ${DEPLOY_DIR} || exit
             export COMPOSE_PROJECT_NAME='${PROJECT_NAME}'
-            ( set -x; docker compose pull ) || exit
-            ( set -x; docker compose up -d --remove-orphans ) || exit
+            ( set -x; docker compose -f docker-compose.prod.yaml pull ) || exit
+            ( set -x; docker compose -f docker-compose.prod.yaml up -d --remove-orphans ) || exit
             ( set -x; docker image prune -f ) || exit
           "
