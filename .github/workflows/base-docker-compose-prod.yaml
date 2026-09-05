@@ -12,7 +12,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: prod
     permissions:
       contents: read
       packages: read
@@ -38,19 +37,20 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SECRET_SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy deployment files
-        run: |
-          ssh ${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }} "mkdir -p /tmp/${{ vars.COMPOSE_PROJECT_NAME }}"
-          scp docker/compose/docker-compose.prod.yaml ${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}:/tmp/${{ vars.COMPOSE_PROJECT_NAME }}/docker-compose.prod.yaml
-
       - name: Execute remote deployment
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
+          DEPLOY_DIR="/tmp/deploy-${{ github.run_id }}"
+
+          ssh $SSH_REMOTE "mkdir -p ${DEPLOY_DIR}"
+          scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.yaml
+
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            cd ${DEPLOY_DIR}
             export COMPOSE_PROJECT_NAME='${{ vars.COMPOSE_PROJECT_NAME }}'
-            cd /tmp/${{ vars.COMPOSE_PROJECT_NAME }}
-            docker compose -f docker-compose.prod.yaml pull
-            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
+            docker compose pull
+            docker compose up -d --remove-orphans
+            rm -rf ${DEPLOY_DIR}
           "
