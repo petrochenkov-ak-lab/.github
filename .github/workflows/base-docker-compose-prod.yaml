@@ -38,11 +38,19 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SECRET_SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy via DOCKER_HOST
-        env:
-          DOCKER_HOST: "ssh://${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
-          COMPOSE_PROJECT_NAME: ${{ vars.COMPOSE_PROJECT_NAME }}
+      - name: Copy deployment files
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker compose -f docker/compose/docker-compose.prod.yaml pull
-          docker compose -f docker/compose/docker-compose.prod.yaml up -d --remove-orphans
+          ssh ${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }} "mkdir -p /tmp/${{ vars.COMPOSE_PROJECT_NAME }}"
+          scp docker/compose/docker-compose.prod.yaml ${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}:/tmp/${{ vars.COMPOSE_PROJECT_NAME }}/docker-compose.prod.yaml
+
+      - name: Execute remote deployment
+        env:
+          SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
+        run: |
+          ssh $SSH_REMOTE "
+            echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            export COMPOSE_PROJECT_NAME='${{ vars.COMPOSE_PROJECT_NAME }}'
+            cd /tmp/${{ vars.COMPOSE_PROJECT_NAME }}
+            docker compose -f docker-compose.prod.yaml pull
+            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
+          "
