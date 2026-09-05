@@ -40,17 +40,18 @@ jobs:
       - name: Execute remote deployment
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
+          PROJECT_NAME: "${{ vars.COMPOSE_PROJECT_NAME }}"
         run: |
-          DEPLOY_DIR="/tmp/deploy-${{ github.run_id }}"
+          DEPLOY_DIR="/etc/${PROJECT_NAME}"
 
-          ssh $SSH_REMOTE "mkdir -p ${DEPLOY_DIR}"
-          scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.yaml
+          ssh $SSH_REMOTE "sudo mkdir -p ${DEPLOY_DIR} && sudo chown -R ${{ secrets.SECRET_SSH_USER }} ${DEPLOY_DIR}"
+          scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.prod.yaml
 
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd ${DEPLOY_DIR}
-            export COMPOSE_PROJECT_NAME='${{ vars.COMPOSE_PROJECT_NAME }}'
+            export COMPOSE_PROJECT_NAME='${PROJECT_NAME}'
             docker compose pull
             docker compose up -d --remove-orphans
-            rm -rf ${DEPLOY_DIR}
+            docker image prune -f
           "
