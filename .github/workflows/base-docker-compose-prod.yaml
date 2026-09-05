@@ -42,16 +42,15 @@ jobs:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
           PROJECT_NAME: "${{ vars.COMPOSE_PROJECT_NAME }}"
         run: |
-          DEPLOY_DIR="/etc/${PROJECT_NAME}"
+          DEPLOY_DIR="/etc/${COMPOSE_PROJECT_NAME}"
 
           ( set -x; ssh $SSH_REMOTE "sudo mkdir -p ${DEPLOY_DIR} && sudo chown -R ${{ secrets.SECRET_SSH_USER }} ${DEPLOY_DIR}" ) || exit
           ( set -x; scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.prod.yaml ) || exit
 
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
-            cd ${DEPLOY_DIR} || exit
-            export COMPOSE_PROJECT_NAME='${PROJECT_NAME}'
-            ( set -x; docker compose -f docker-compose.prod.yaml pull ) || exit
-            ( set -x; docker compose -f docker-compose.prod.yaml up -d --remove-orphans ) || exit
+
+            ( set -x; docker compose -p \"${COMPOSE_PROJECT_NAME}\" -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} pull ) || exit
+            ( set -x; docker compose -p \"${COMPOSE_PROJECT_NAME}\" -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} up -d --remove-orphans ) || exit
             ( set -x; docker image prune -f ) || exit
           "
