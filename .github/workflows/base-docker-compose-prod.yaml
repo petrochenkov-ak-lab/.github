@@ -42,7 +42,7 @@ jobs:
         run: |
           DEPLOY_DIR="~/docker-compose/${{ github.event.repository.name }}"
 
-          ( set -x; ssh $SSH_REMOTE "sudo mkdir -p ${DEPLOY_DIR} && sudo chown -R ${{ secrets.SECRET_SSH_USER }} ${DEPLOY_DIR}" ) || exit
+          ( set -x; ssh $SSH_REMOTE "mkdir -p ${DEPLOY_DIR}" ) || exit
           ( set -x; scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.prod.yaml ) || exit
 
           ssh $SSH_REMOTE "
