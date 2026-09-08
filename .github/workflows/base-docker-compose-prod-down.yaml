@@ -1,0 +1,45 @@
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      SECRET_SSH_KEY:
+        required: true
+      SECRET_SSH_HOST:
+        required: true
+      SECRET_SSH_USER:
+        required: true
+
+jobs:
+  down:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Configuration
+        run: |
+          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secret.SECRET_SSH_KEY is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secret.SECRET_SSH_HOST is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secret.SECRET_SSH_USER is empty"; exit 1; }
+
+      - name: Set up SSH agent and keys
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SECRET_SSH_KEY }}
+
+      - name: Add remote server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SECRET_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute remote docker compose down
+        env:
+          SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
+        run: |
+          DEPLOY_DIR="~/docker-compose/${{ github.event.repository.name }}"
+
+          ssh $SSH_REMOTE "
+            if [ -d \"${DEPLOY_DIR}\" ] && [ -f \"${DEPLOY_DIR}/docker-compose.prod.yaml\" ]; then
+              ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} down ) || exit
+            else
+              echo \"Warning: Deployment directory or docker-compose.prod.yaml does not exist. Nothing to stop.\"
+            fi
+          "
