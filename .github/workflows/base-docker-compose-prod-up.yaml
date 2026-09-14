@@ -22,9 +22,10 @@ jobs:
 
       - name: Validate Configuration
         run: |
-          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secret.SECRET_SSH_KEY is empty"; exit 1; }
-          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secret.SECRET_SSH_HOST is empty"; exit 1; }
-          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secret.SECRET_SSH_USER is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secrets.SECRET_SSH_KEY is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secrets.SECRET_SSH_HOST is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secrets.SECRET_SSH_USER is empty"; exit 1; }
+          [ -n "${{ vars.PROJECT_NAME }}" ] || { echo "ERROR: vars.PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH agent and keys
         uses: webfactory/ssh-agent@v0.9.0
@@ -40,12 +41,8 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR=/opt/${{ github.event.repository.name }}"
-
-          ( set -x; ssh $SSH_REMOTE "mkdir -p ${DEPLOY_DIR}" ) || exit
-          ( set -x; scp docker/compose/docker-compose.base.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.base.yaml ) || exit
-          ( set -x; scp docker/compose/docker-compose.prod.yaml ${SSH_REMOTE}:${DEPLOY_DIR}/docker-compose.prod.yaml ) || exit
-
+          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
+          ( set -x; rsync -az --mkpath docker/compose/ ${SSH_REMOTE}:${DEPLOY_DIR}/ ) || exit 1
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
 

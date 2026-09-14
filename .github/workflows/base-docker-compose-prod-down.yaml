@@ -16,9 +16,10 @@ jobs:
     steps:
       - name: Validate Configuration
         run: |
-          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secret.SECRET_SSH_KEY is empty"; exit 1; }
-          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secret.SECRET_SSH_HOST is empty"; exit 1; }
-          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secret.SECRET_SSH_USER is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secrets.SECRET_SSH_KEY is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secrets.SECRET_SSH_HOST is empty"; exit 1; }
+          [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secrets.SECRET_SSH_USER is empty"; exit 1; }
+          [ -n "${{ vars.PROJECT_NAME }}" ] || { echo "ERROR: vars.PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH agent and keys
         uses: webfactory/ssh-agent@v0.9.0
@@ -34,7 +35,7 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR=/opt/${{ github.event.repository.name }}"
+          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
 
           ssh $SSH_REMOTE "
             if [ -d \"${DEPLOY_DIR}\" ] && [ -f \"${DEPLOY_DIR}/docker-compose.prod.yaml\" ]; then

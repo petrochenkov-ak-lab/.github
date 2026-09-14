@@ -1,9 +1,0 @@
-/opt/{project}/local/
-    ├── docker-compose.yaml        # Специфичный для local (с volume для разработки)
-    ├── .env                       # Точные переменные для local
-    └── secrets/                   # Локальные заглушки секретов
-
-/opt/{project}/prod/
-    ├── docker-compose.yaml        # Специфичный для prod (с правильными рестарт-политиками)
-    ├── .env                       # Только прод-переменные
-    └── secrets/                   # Реальные прод-секреты (доступ только для root/docker)

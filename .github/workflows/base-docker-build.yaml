@@ -1,29 +1,20 @@
 on:
+  workflow_dispatch:
   workflow_call:
-    inputs:
-      image_name:
+    secrets:
+      SECRET_SSH_KEY:
         required: true
-        type: string
-        description: 'Docker image name (e.g., backend)'
-      image_tag:
-        required: false
-        type: string
-        default: 'latest'
-        description: 'Build tag'
-      dockerfile:
-        required: false
-        type: string
-        default: './Dockerfile'
-        description: 'Path to Dockerfile'
+      SECRET_SSH_HOST:
+        required: true
+      SECRET_SSH_USER:
+        required: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,13 +29,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ inputs.dockerfile }}
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+      - name: Build via Docker Compose
+        run: |
+          docker compose -f docker/compose/docker-compose.base.yaml build

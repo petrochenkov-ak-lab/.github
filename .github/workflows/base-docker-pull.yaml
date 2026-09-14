@@ -1,0 +1,51 @@
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: 'Имя конкретного сервиса из docker-compose для pull'
+    secrets:
+      SECRET_SSH_KEY:  { required: true }
+      SECRET_SSH_HOST: { required: true }
+      SECRET_SSH_USER: { required: true }
+
+jobs:
+  pull-and-up:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SECRET_SSH_KEY }}
+
+      - name: Add remote server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SECRET_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute target service sync
+        env:
+          SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
+        run: |
+          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
+          ( set -x; rsync -az --mkpath docker/compose/ ${SSH_REMOTE}:${DEPLOY_DIR}/ ) || exit 1
+
+          ssh $SSH_REMOTE "
+            echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
+
+            # Качаем строго ОДИН прилетевший сервис
+            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} pull ${{ inputs.service_name }} ) || exit 1
+
+            # Поднимаем его (все остальные сервисы берутся из missing кэша)
+            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} up -d --remove-orphans --pull missing ) || exit 1
+
+            ( set -x; docker image prune -f ) || exit 1
+          "
