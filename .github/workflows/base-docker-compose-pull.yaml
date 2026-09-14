@@ -4,7 +4,7 @@ on:
       service_name:
         required: true
         type: string
-        description: 'Имя конкретного сервиса из docker-compose для pull'
+        description: 'docker-compose service name'
     secrets:
       SECRET_SSH_KEY:  { required: true }
       SECRET_SSH_HOST: { required: true }
