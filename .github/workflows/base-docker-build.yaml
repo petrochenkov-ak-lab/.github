@@ -1,13 +1,6 @@
 on:
   workflow_dispatch:
   workflow_call:
-    secrets:
-      SECRET_SSH_KEY:
-        required: true
-      SECRET_SSH_HOST:
-        required: true
-      SECRET_SSH_USER:
-        required: true
 
 jobs:
   build-and-push:
