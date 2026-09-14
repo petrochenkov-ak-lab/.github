@@ -32,3 +32,4 @@ jobs:
       - name: Build via Docker Compose
         run: |
           docker compose -f docker/compose/docker-compose.base.yaml build
+          docker compose -f docker/compose/docker-compose.base.yaml push
