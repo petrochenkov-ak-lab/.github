@@ -34,11 +34,11 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR="~/docker-compose/${{ github.event.repository.name }}"
+          DEPLOY_DIR=/opt/${{ github.event.repository.name }}"
 
           ssh $SSH_REMOTE "
             if [ -d \"${DEPLOY_DIR}\" ] && [ -f \"${DEPLOY_DIR}/docker-compose.prod.yaml\" ]; then
-              ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} down ) || exit
+              ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} down ) || exit
             else
               echo \"Warning: Deployment directory or docker-compose.prod.yaml does not exist. Nothing to stop.\"
             fi
