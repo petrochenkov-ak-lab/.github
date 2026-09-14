@@ -1,0 +1,19 @@
+on:
+  workflow_call:
+    secrets:
+      SECRET_SSH_KEY:
+        required: true
+      SECRET_SSH_HOST:
+        required: true
+      SECRET_SSH_USER:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  docker_compose_build_push:
+    uses: petrochenkov-ak-lab/.github/.github/workflows/base-docker-compose-build-push.yaml@main
+
+  docker_compose_pull:
+    needs: docker_compose_build_push
+    uses: petrochenkov-ak-lab/.github/.github/workflows/base-docker-compose-pull.yaml@main
+    secrets: inherit

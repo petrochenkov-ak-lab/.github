@@ -1,14 +1,10 @@
 on:
   workflow_call:
-    inputs:
-      service_name:
-        required: true
-        type: string
-        description: 'docker-compose service name'
     secrets:
       SECRET_SSH_KEY:  { required: true }
       SECRET_SSH_HOST: { required: true }
       SECRET_SSH_USER: { required: true }
+  workflow_dispatch:
 
 jobs:
   pull-and-up:
@@ -41,11 +37,6 @@ jobs:
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
 
-            # Качаем строго ОДИН прилетевший сервис
-            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} pull ${{ inputs.service_name }} ) || exit 1
-
-            # Поднимаем его (все остальные сервисы берутся из missing кэша)
-            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} up -d --remove-orphans --pull missing ) || exit 1
-
+            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml --project-directory ${DEPLOY_DIR} pull ) || exit 1
             ( set -x; docker image prune -f ) || exit 1
           "

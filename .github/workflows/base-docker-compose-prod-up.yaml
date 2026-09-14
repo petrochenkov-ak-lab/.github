@@ -1,5 +1,4 @@
 on:
-  workflow_dispatch:
   workflow_call:
     secrets:
       SECRET_SSH_KEY:
@@ -8,6 +7,7 @@ on:
         required: true
       SECRET_SSH_USER:
         required: true
+  workflow_dispatch:
 
 jobs:
   deploy:

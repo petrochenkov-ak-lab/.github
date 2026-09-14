@@ -1,0 +1,12 @@
+docker-compose-publish.yaml некоррректно тк нет команды publish?
+сравни что лучше
+1) docker-compose-publish.yaml
+2) docker-compose-build-push.yaml
+варианты таблицей оценка шкала 1..100
+
+---
+на каком шаге делать pull на сервере
+1) build push, pull
+2) pull , docker compose up (не будет ли замедлять up?)
+---
+нет нет ты ж сам говорил перезапускать автоматически НЕЛЬЗЯ. перезапуск up только вручную
