@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  docker_compose_up:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,7 +25,6 @@ jobs:
           [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secrets.SECRET_SSH_KEY is empty"; exit 1; }
           [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secrets.SECRET_SSH_HOST is empty"; exit 1; }
           [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secrets.SECRET_SSH_USER is empty"; exit 1; }
-          [ -n "${{ vars.PROJECT_NAME }}" ] || { echo "ERROR: vars.PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH agent and keys
         uses: webfactory/ssh-agent@v0.9.0
@@ -46,7 +45,5 @@ jobs:
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
 
-            ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} pull ) || exit
             ( set -x; docker compose -f ${DEPLOY_DIR}/docker-compose.base.yaml  -f ${DEPLOY_DIR}/docker-compose.prod.yaml --project-directory ${DEPLOY_DIR} up -d --remove-orphans ) || exit
-            ( set -x; docker image prune -f ) || exit
           "

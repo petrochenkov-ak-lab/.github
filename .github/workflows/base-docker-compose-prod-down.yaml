@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  down:
+  docker_compose_down:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +19,6 @@ jobs:
           [ -n "${{ secrets.SECRET_SSH_KEY }}" ] || { echo "ERROR: secrets.SECRET_SSH_KEY is empty"; exit 1; }
           [ -n "${{ secrets.SECRET_SSH_HOST }}" ] || { echo "ERROR: secrets.SECRET_SSH_HOST is empty"; exit 1; }
           [ -n "${{ secrets.SECRET_SSH_USER }}" ] || { echo "ERROR: secrets.SECRET_SSH_USER is empty"; exit 1; }
-          [ -n "${{ vars.PROJECT_NAME }}" ] || { echo "ERROR: vars.PROJECT_NAME is empty"; exit 1; }
 
       - name: Set up SSH agent and keys
         uses: webfactory/ssh-agent@v0.9.0
