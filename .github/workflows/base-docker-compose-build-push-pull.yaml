@@ -11,6 +11,9 @@ on:
 
 jobs:
   docker_compose_build_push:
+    permissions:
+      contents: read
+      packages: write
     uses: petrochenkov-ak-lab/.github/.github/workflows/base-docker-compose-build-push.yaml@main
 
   docker_compose_pull:
