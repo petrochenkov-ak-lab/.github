@@ -14,6 +14,13 @@ jobs:
       packages: read
 
     steps:
+      - name: Validate PROJECT_NAME variable
+        run: |
+          if [ -z "${{ vars.PROJECT_NAME }}" ]; then
+            echo "ERROR: variable 'PROJECT_NAME' is missing or empty!"
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
