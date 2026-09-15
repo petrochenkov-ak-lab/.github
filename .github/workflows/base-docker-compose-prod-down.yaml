@@ -35,7 +35,7 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
+          DEPLOY_DIR="/opt/${{ github.event.repository.name }}/prod"
 
           ssh $SSH_REMOTE "
             if [ -d \"${DEPLOY_DIR}\" ] && [ -f \"${DEPLOY_DIR}/docker-compose.prod.yaml\" ]; then

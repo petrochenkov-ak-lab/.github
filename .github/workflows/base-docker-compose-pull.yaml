@@ -14,13 +14,6 @@ jobs:
       packages: read
 
     steps:
-      - name: Validate PROJECT_NAME variable
-        run: |
-          if [ -z "${{ vars.PROJECT_NAME }}" ]; then
-            echo "ERROR: variable 'PROJECT_NAME' is missing or empty!"
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -38,7 +31,7 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
+          DEPLOY_DIR="/opt/${{ github.event.repository.name }}/prod"
           ( set -x; rsync -az --mkpath docker/compose/ ${SSH_REMOTE}:${DEPLOY_DIR}/ ) || exit 1
 
           ssh $SSH_REMOTE "

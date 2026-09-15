@@ -41,7 +41,7 @@ jobs:
         env:
           SSH_REMOTE: "${{ secrets.SECRET_SSH_USER }}@${{ secrets.SECRET_SSH_HOST }}"
         run: |
-          DEPLOY_DIR="/opt/${{ vars.PROJECT_NAME }}/prod"
+          DEPLOY_DIR="/opt/${{ github.event.repository.name }}/prod"
           ( set -x; rsync -az --mkpath docker/compose/ ${SSH_REMOTE}:${DEPLOY_DIR}/ ) || exit 1
           ssh $SSH_REMOTE "
             echo '${{ secrets.GITHUB_TOKEN }}' | ( set -x; docker login ghcr.io -u ${{ github.actor }} --password-stdin )
